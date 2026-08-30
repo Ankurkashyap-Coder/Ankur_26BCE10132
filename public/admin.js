@@ -3,15 +3,12 @@ const socket = io();
 const createPollSection = document.getElementById('create-poll-section');
 const adminWaitingSection = document.getElementById('admin-waiting-section');
 const adminResultsSection = document.getElementById('admin-results-section');
-
 const addOptionBtn = document.getElementById('add-option-btn');
 const optionsContainer = document.getElementById('options-container');
 const createRoomBtn = document.getElementById('create-room-btn');
-
 const displayRoomCode = document.getElementById('display-room-code');
 const participantCount = document.getElementById('participant-count');
 const startVotingBtn = document.getElementById('start-voting-btn');
-
 const resultsQuestion = document.getElementById('results-question');
 const resultsContainer = document.getElementById('results-container');
 const totalVotesElement = document.getElementById('total-votes');
@@ -57,9 +54,7 @@ socket.on('updateParticipantCount', (count) => {
 startVotingBtn.addEventListener('click', () => {
     socket.emit('startVoting');
     adminWaitingSection.classList.add('hidden');
-    
-    const question = document.getElementById('poll-question').value;
-    resultsQuestion.innerText = question;
+    resultsQuestion.innerText = document.getElementById('poll-question').value;
     adminResultsSection.classList.remove('hidden');
 });
 
