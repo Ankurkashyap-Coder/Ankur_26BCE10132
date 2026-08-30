@@ -2,7 +2,7 @@
 
 A lightweight, production-ready full-stack live polling application built to fulfill the SDC recruitment technical challenge. This platform enables an administrator to create dynamic polls and broadcast live, synchronized voting metrics to connected participants in real time without page refreshes.
 
-## Ìª†Ô∏è Tech Stack & Architecture
+##  Tech Stack & Architecture
 * **Frontend:** Semantic HTML5, Custom Responsive CSS3 Variables, Vanilla JavaScript (ES6+).
 * **Backend:** Node.js, Express.js REST Framework.
 * **Real-Time Layer:** WebSockets via Socket.io (Bidirectional Event-Driven Engine).
@@ -25,7 +25,7 @@ To defend against artificial vote inflation, the client frontend locks and disab
 
 ---
 
-## Ì≤ª Local Installation & Setup
+##  Local Installation & Setup
 
 Ensure you have **Node.js** installed on your system, then follow these instructions:
 
