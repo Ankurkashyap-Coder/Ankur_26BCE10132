@@ -6,8 +6,8 @@ A production-ready full-stack live polling application built to fulfill the SDC 
 
 Anyone can test the live application instantly using these public URLs:
 
-*   ⚙️ **Admin Control Panel (Create Polls Here):** [https://onrender.com](https://onrender.com)
-*   📱 **Participant Portal (Join & Vote Here):** [https://onrender.com](https://onrender.com)
+*   ⚙️ **Admin Control Panel (Create Polls Here):** [https://onrender.com]([https://onrender.com](https://ankur-26bce10132.onrender.com/admin.html))
+*   📱 **Participant Portal (Join & Vote Here):** [https://onrender.com]([https://onrender.com](https://ankur-26bce10132.onrender.com/))
 
 ---
 
