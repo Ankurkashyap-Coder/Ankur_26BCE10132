@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDC Poll - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="create-poll-section" class="card">
+            <h2>Create a Live Poll</h2>
+            <div class="form-group">
+                <label for="poll-question">Question:</label>
+                <input type="text" id="poll-question" placeholder="e.g., Favorite programming language?">
+            </div>
+            <div class="form-group">
+                <label>Options (2 to 6):</label>
+                <div id="options-container">
+                    <input type="text" class="poll-option" placeholder="Option 1">
+                    <input type="text" class="poll-option" placeholder="Option 2">
+                </div>
+                <button type="button" id="add-option-btn" class="btn-secondary">+ Add Option</button>
+            </div>
+            <button id="create-room-btn" class="btn-primary">Create Poll Room</button>
+        </div>
+        <div id="admin-waiting-section" class="card hidden">
+            <h2>Room Created!</h2>
+            <div class="room-code-display">Room Code: <span id="display-room-code">XXXX</span></div>
+            <p>Connected Participants: <strong id="participant-count">0</strong></p>
+            <button id="start-voting-btn" class="btn-primary">Begin Voting</button>
+        </div>
+        <div id="admin-results-section" class="card hidden">
+            <h2 id="results-question">Poll Question</h2>
+            <div id="results-container"></div>
+            <p>Total Votes Cast: <strong id="total-votes">0</strong></p>
+            <button id="end-poll-btn" class="btn-danger">End Poll</button>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
