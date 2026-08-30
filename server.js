@@ -9,27 +9,33 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static UI files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory data store for live rooms
+// Multi-Question In-Memory Cache Store Map
 const activeRooms = {};
 
 io.on('connection', (socket) => {
     let currentRoom = null;
     let isRoleAdmin = false;
 
-    // ADMIN: Create Poll & Init Room
-    socket.on('createRoom', ({ question, options }) => {
-        const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase(); // Generates 5-letter code
+    // ADMIN: Create Poll with Multi-Question Input Array Support
+    socket.on('createRoom', ({ questionsArray }) => {
+        const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
         
-        const optionsObj = {};
-        options.forEach(opt => { if(opt.trim() !== '') optionsObj[opt] = 0; });
+        // Structure every question with its own low-latency vote tally tracker object
+        const structuredQuestions = questionsArray.map(q => {
+            const optionsObj = {};
+            q.options.forEach(opt => { if(opt.trim() !== '') optionsObj[opt] = 0; });
+            return {
+                question: q.question,
+                options: optionsObj,
+                totalVotes: 0
+            };
+        });
 
         activeRooms[roomCode] = {
-            question,
-            options: optionsObj,
-            totalVotes: 0,
+            questionsList: structuredQuestions,
+            currentQuestionIndex: 0,
             state: 'waiting',
             participants: 0
         };
@@ -37,11 +43,10 @@ io.on('connection', (socket) => {
         currentRoom = roomCode;
         isRoleAdmin = true;
         socket.join(roomCode);
-        
         socket.emit('roomCreated', roomCode);
     });
 
-    // PARTICIPANT: Try to Join Room
+    // PARTICIPANT: Join Room Router
     socket.on('joinRoom', (roomCode) => {
         if (!activeRooms[roomCode]) {
             return socket.emit('errorMsg', 'Room not found. Check the code.');
@@ -51,72 +56,90 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         activeRooms[roomCode].participants += 1;
 
-        // Notify everyone in the room (specifically admin) about new total user count
         io.to(roomCode).emit('updateParticipantCount', activeRooms[roomCode].participants);
 
-        // Tell this specific participant what state the room is currently in
+        const room = activeRooms[roomCode];
+        const currentQ = room.questionsList[room.currentQuestionIndex];
+        
         socket.emit('joinedRoomSuccessfully', {
-            state: activeRooms[roomCode].state,
-            question: activeRooms[roomCode].question,
-            options: Object.keys(activeRooms[roomCode].options)
+            state: room.state,
+            question: currentQ.question,
+            options: Object.keys(currentQ.options),
+            currentIndex: room.currentQuestionIndex,
+            totalQuestions: room.questionsList.length
         });
     });
 
-    // ADMIN: Begin Voting Phase
+    // ADMIN: Trigger Delayed Safe Buffer Countdown Before Voting Goes Live
     socket.on('startVoting', () => {
         if (isRoleAdmin && activeRooms[currentRoom]) {
-            activeRooms[currentRoom].state = 'voting';
-            // Force server-pushed transition to the participant UI without reloading
-            io.to(currentRoom).emit('votingStarted', {
-                question: activeRooms[currentRoom].question,
-                options: Object.keys(activeRooms[currentRoom].options)
-            });
+            const room = activeRooms[currentRoom];
+            room.state = 'countdown';
+            
+            // Broadcast a 5-second server-pushed timer event down the websocket channel
+            io.to(currentRoom).emit('countdownStarted', { seconds: 5 });
+
+            setTimeout(() => {
+                if (activeRooms[currentRoom]) {
+                    room.state = 'voting';
+                    const currentQ = room.questionsList[room.currentQuestionIndex];
+                    
+                    io.to(currentRoom).emit('votingStarted', {
+                        question: currentQ.question,
+                        options: Object.keys(currentQ.options),
+                        currentIndex: room.currentQuestionIndex,
+                        totalQuestions: room.questionsList.length
+                    });
+                }
+            }, 5000);
         }
     });
 
-    // PARTICIPANT: Submit Vote
+    // PARTICIPANT: Process Incoming Stream Selection payload
     socket.on('submitVote', (selectedOption) => {
         if (activeRooms[currentRoom] && activeRooms[currentRoom].state === 'voting') {
-            if (activeRooms[currentRoom].options[selectedOption] !== undefined) {
-                activeRooms[currentRoom].options[selectedOption] += 1;
-                activeRooms[currentRoom].totalVotes += 1;
+            const room = activeRooms[currentRoom];
+            const currentQ = room.questionsList[room.currentQuestionIndex];
+            
+            if (currentQ.options[selectedOption] !== undefined) {
+                currentQ.options[selectedOption] += 1;
+                currentQ.totalVotes += 1;
 
-                // Broadcast live up-to-date scores instantly to both Admin and Participants
                 io.to(currentRoom).emit('liveResultsUpdate', {
-                    options: activeRooms[currentRoom].options,
-                    totalVotes: activeRooms[currentRoom].totalVotes
+                    options: currentQ.options,
+                    totalVotes: currentQ.totalVotes
                 });
             }
         }
     });
 
-    // ADMIN: End Poll & Freeze Results
+    // ADMIN: Cycle Next Question Framework or Enforce Concluded Summary Screen State
     socket.on('endPoll', () => {
         if (isRoleAdmin && activeRooms[currentRoom]) {
-            activeRooms[currentRoom].state = 'ended';
+            const room = activeRooms[currentRoom];
             
-            // Calculate winner
-            const options = activeRooms[currentRoom].options;
-            let winner = '';
-            let maxVotes = -1;
-            for (const [key, value] of Object.entries(options)) {
-                if (value > maxVotes) {
-                    maxVotes = value;
-                    winner = key;
-                }
+            // If there are more questions remaining in the list stack
+            if (room.currentQuestionIndex < room.questionsList.length - 1) {
+                room.currentQuestionIndex++;
+                room.state = 'waiting';
+                
+                // Advance state globally and place users into next sequential waiting room
+                io.to(currentRoom).emit('prepareNextQuestion', { 
+                    nextIndex: room.currentQuestionIndex,
+                    totalQuestions: room.questionsList.length
+                });
+            } else {
+                // All items completed. Lock inputs permanently and send final overview statistics
+                room.state = 'ended';
+                io.to(currentRoom).emit('pollEnded', { finalSummary: room.questionsList });
             }
-
-            io.to(currentRoom).emit('pollEnded', { winner });
         }
     });
 
-    // CLEANUP: Track when client closes tab/disconnects
     socket.on('disconnect', () => {
-        if (currentRoom && activeRooms[currentRoom]) {
-            if (!isRoleAdmin) {
-                activeRooms[currentRoom].participants = Math.max(0, activeRooms[currentRoom].participants - 1);
-                io.to(currentRoom).emit('updateParticipantCount', activeRooms[currentRoom].participants);
-            }
+        if (currentRoom && activeRooms[currentRoom] && !isRoleAdmin) {
+            activeRooms[currentRoom].participants = Math.max(0, activeRooms[currentRoom].participants - 1);
+            io.to(currentRoom).emit('updateParticipantCount', activeRooms[currentRoom].participants);
         }
     });
 });
