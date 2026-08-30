@@ -8,40 +8,44 @@
 </head>
 <body>
     <div class="container">
-        <!-- STEP 1: CREATE POLL FORM -->
+        <!-- ADMIN FLOW STEP 1: CREATE POLL -->
         <div id="create-poll-section" class="card">
             <h2>Create a Live Poll</h2>
             <div class="form-group">
-                <label for="poll-question">Question:</label>
+                <label for="poll-question">Question Text:</label>
                 <input type="text" id="poll-question" placeholder="e.g., What is your favorite programming language?">
             </div>
             <div class="form-group">
-                <label>Options (2 to 6):</label>
+                <label>Options (2 to 6 options max):</label>
                 <div id="options-container">
                     <input type="text" class="poll-option" placeholder="Option 1">
                     <input type="text" class="poll-option" placeholder="Option 2">
                 </div>
-                <button type="button" id="add-option-btn" class="btn-secondary">+ Add Option</button>
+                <button type="button" id="add-option-btn" class="btn-secondary">+ Add Option Dynamically</button>
             </div>
             <button id="create-room-btn" class="btn-primary">Create Poll Room</button>
         </div>
 
-        <!-- STEP 2: ADMIN WAITING ROOM -->
+        <!-- ADMIN FLOW STEP 2: ROOM CREATED / WAITING ROOM -->
         <div id="admin-waiting-section" class="card hidden">
             <h2>Room Created!</h2>
             <div class="room-code-display">Room Code: <span id="display-room-code">XXXX</span></div>
-            <p>Connected Participants: <strong id="participant-count">0</strong></p>
+            <p>Connected Participants: <strong id="participant-count" style="color: var(--primary);">0</strong></p>
+            <p style="font-size: 14px; margin-bottom: 20px;">Wait here until everyone joins before pressing the button below.</p>
             <button id="start-voting-btn" class="btn-primary">Begin Voting</button>
         </div>
 
-        <!-- STEP 3: LIVE & FINAL RESULTS -->
+        <!-- ADMIN FLOW STEP 3 & 4: LIVE & FINAL RESULTS -->
         <div id="admin-results-section" class="card hidden">
             <h2 id="results-question">Poll Question</h2>
-            <div id="results-container"></div>
-            <p>Total Votes Cast: <strong id="total-votes">0</strong></p>
+            <div id="results-container">
+                <!-- Live growing bar graphs go here dynamically -->
+            </div>
+            <p style="margin-top: 20px; font-weight: 600;">Total Votes Cast: <strong id="total-votes">0</strong></p>
             <button id="end-poll-btn" class="btn-danger">End Poll</button>
         </div>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="admin.js"></script>
 </body>
