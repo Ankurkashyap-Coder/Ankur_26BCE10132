@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDC Live Poll - Join</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="join-section" class="card">
+            <h2>Join Live Poll</h2>
+            <div class="form-group">
+                <input type="text" id="room-input" placeholder="Enter 5-Digit Room Code" maxlength="5">
+            </div>
+            <button id="join-btn" class="btn-primary">Join Room</button>
+            <p id="join-error" style="color:red; font-size:14px;"></p>
+        </div>
+        <div id="wait-section" class="card hidden">
+            <h2>Connected!</h2>
+            <p class="room-code-display">Waiting Room</p>
+            <p style="text-align: center; color: #6b7280;">You're in! Please wait for the host to begin voting.</p>
+        </div>
+        <div id="vote-section" class="card hidden">
+            <h2 id="vote-question">Question Text</h2>
+            <div id="vote-options-box"></div>
+        </div>
+        <div id="client-results-section" class="card hidden">
+            <h2>Live Feed Standings</h2>
+            <div id="client-results-container"></div>
+            <p style="margin-top:15px; text-align:center;" id="client-status-message">Voting in progress...</p>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
